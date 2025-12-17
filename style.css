@@ -148,24 +148,24 @@ body {
 }
 
 /* --- GAME GRID LAYOUT --- */
-/* DEFAULT: MOBILE COMPACT (Flex Column) */
+/* MOBILE: ROBUST GRID LAYOUT (Prevents Overlap) */
 .game-grid {
-    display: flex;
-    /* Ensure display flex is explicit */
-    flex-direction: column;
+    display: grid;
+    /* 3 Rows: Info Panel (Auto), Workspace (Remaining Space), Controls (Auto) */
+    grid-template-rows: auto minmax(0, 1fr) auto;
     height: 100%;
-    /* Fill remaining space */
+    width: 100%;
     background: var(--bg);
     overflow: hidden;
-    /* Prevent scrolling */
 }
 
-/* 1. INFO PANEL (Timer + Targets) */
+/* 1. INFO PANEL (Top) */
 .panel-info {
+    grid-row: 1;
     padding: 10px 15px;
-    /* Compact padding */
     background: var(--bg);
-    flex-shrink: 0;
+    z-index: 10;
+    /* Ensure it stays above */
 }
 
 .timer-area {
@@ -254,14 +254,16 @@ body {
 }
 
 .color-preview.main {
-    width: 250px;
-    height: 250px;
+    /* Smart Sizing: Use the smaller dimension (width or height) minus margins */
+    width: min(75vw, 45vh);
+    height: min(75vw, 45vh);
+    max-width: 300px;
+    max-height: 300px;
     border-radius: 50%;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
     transition: background-color 0.1s;
-    /* Responsive Circle */
-    max-height: 70vw;
-    max-width: 70vw;
+    flex-shrink: 1;
+    /* Allow shrinking */
 }
 
 .reset-icon {
