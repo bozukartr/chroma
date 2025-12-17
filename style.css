@@ -162,10 +162,10 @@ body {
 
 /* 1. INFO PANEL (Timer + Targets) */
 .panel-info {
-    padding: 16px 20px;
+    padding: 10px 15px;
+    /* Compact padding */
     background: var(--bg);
     flex-shrink: 0;
-    /* Keep size static */
 }
 
 .timer-area {
@@ -284,13 +284,13 @@ body {
 /* 3. CONTROLS (Bottom) */
 .panel-controls {
     background: var(--surface);
-    padding: 20px;
-    padding-bottom: max(20px, env(safe-area-inset-bottom));
-    /* Safe area */
+    padding: 15px;
+    padding-bottom: max(15px, env(safe-area-inset-bottom));
     border-top: 1px solid var(--border);
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 10px;
+    /* Tighter gap */
     flex-shrink: 0;
 }
 
