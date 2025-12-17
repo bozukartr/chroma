@@ -1,0 +1,561 @@
+:root {
+    --bg: #F3F4F6;
+    --surface: #FFFFFF;
+    --text-main: #111827;
+    --text-dim: #6B7280;
+    --border: #E5E7EB;
+
+    --primary: #111827;
+    --red: #EF4444;
+    --green: #10B981;
+    --blue: #3B82F6;
+
+    --radius: 16px;
+    --radius-sm: 8px;
+
+    /* Layout Variables */
+    --app-max-width: 1200px;
+    --sidebar-width: 300px;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+    height: 100%;
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text-main);
+    overflow: hidden;
+}
+
+/* --- GLOBAL APP SHELL --- */
+.app-root {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.view {
+    display: none;
+    width: 100%;
+    height: 100%;
+}
+
+.view.active {
+    display: flex;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* HEADER */
+.app-header {
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.logo {
+    font-weight: 900;
+    letter-spacing: -0.05em;
+    font-size: 1.2rem;
+}
+
+.status-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: var(--bg);
+    padding: 4px 8px;
+    border-radius: 4px;
+    color: var(--text-dim);
+}
+
+/* --- LOBBY --- */
+#lobbyScreen {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.lobby-content {
+    background: var(--surface);
+    padding: 40px;
+    border-radius: var(--radius);
+    text-align: center;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+.lobby-content h1 {
+    margin-bottom: 8px;
+    font-size: 1.8rem;
+}
+
+.lobby-content p {
+    color: var(--text-dim);
+    margin-bottom: 30px;
+}
+
+.lobby-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.divider {
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin: 8px 0;
+}
+
+.join-row {
+    display: flex;
+    gap: 8px;
+}
+
+#joinInput {
+    flex: 1;
+    text-align: center;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+/* --- GAME GRID LAYOUT --- */
+/* DEFAULT: MOBILE COMPACT (Flex Column) */
+.game-grid {
+    flex-direction: column;
+    background: var(--bg);
+    overflow: hidden;
+    /* Prevent scrolling */
+}
+
+/* 1. INFO PANEL (Timer + Targets) */
+.panel-info {
+    padding: 16px 20px;
+    background: var(--bg);
+    flex-shrink: 0;
+    /* Keep size static */
+}
+
+.timer-area {
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#timerDisplay {
+    font-family: monospace;
+    font-weight: 700;
+    width: 24px;
+}
+
+.timer-bar {
+    flex: 1;
+    height: 6px;
+    background: #D1D5DB;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.timer-fill {
+    height: 100%;
+    background: var(--primary);
+    transition: width 0.1s linear, background 0.3s;
+}
+
+.targets-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.target-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+}
+
+.color-preview {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: #eee;
+}
+
+.color-preview.opponent {
+    opacity: 0.5;
+    background-image: radial-gradient(#000 1px, transparent 1px);
+    background-size: 10px 10px;
+}
+
+.label {
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+}
+
+/* 2. WORKSPACE (Main Mix) - Flexible */
+.panel-workspace {
+    flex: 1;
+    /* Take remaining space */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 20px;
+    min-height: 0;
+    /* Important for flex shrinking */
+}
+
+.mix-container {
+    width: 100%;
+    max-width: 320px;
+    aspect-ratio: 1;
+    position: relative;
+    max-height: 100%;
+    /* Never exceed parent height */
+}
+
+.color-preview.main {
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radius);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.reset-icon {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    width: 40px;
+    height: 40px;
+    background: var(--surface);
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    color: var(--text-main);
+}
+
+/* 3. CONTROLS (Bottom) */
+.panel-controls {
+    background: var(--surface);
+    padding: 20px;
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+    /* Safe area */
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    flex-shrink: 0;
+}
+
+.ink-row {
+    display: flex;
+    gap: 12px;
+    height: 60px;
+}
+
+.ink-btn {
+    flex: 1;
+    border: none;
+    border-radius: var(--radius-sm);
+    color: white;
+    font-weight: 900;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ink-btn span {
+    opacity: 0.3;
+}
+
+.ink-btn:active {
+    transform: scale(0.96);
+}
+
+.ink-btn.red {
+    background: var(--red);
+}
+
+.ink-btn.green {
+    background: var(--green);
+}
+
+.ink-btn.blue {
+    background: var(--blue);
+}
+
+.btn {
+    border: none;
+    padding: 16px;
+    border-radius: var(--radius-sm);
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    font-size: 1rem;
+}
+
+.btn.primary {
+    background: var(--primary);
+    color: white;
+}
+
+.btn.secondary {
+    background: white;
+    border: 1px solid var(--border);
+}
+
+.btn.ghost {
+    background: transparent;
+    color: var(--text-dim);
+}
+
+/* Hardcore Memory Mode (Global) */
+.color-preview.hidden-mode {
+    background-color: #FAFAFA !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.color-preview.hidden-mode::after {
+    content: "?";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 3rem;
+    font-weight: 800;
+    color: #a3a3a3;
+}
+
+/* --- RESPONSIVE: DESKTOP (Dashboard Mode) --- */
+@media (min-width: 769px) {
+    .app-root {
+        background: #E5E7EB;
+
+        /* Darker backdrop */
+        /* Hardcore Memory Mode */
+
+
+        align-items: center;
+        justify-content: center;
+    }
+
+    .app-header {
+        display: none;
+    }
+
+    /* Hide mobile header */
+
+    /* Game as a floating window */
+    .game-grid:not(.hidden) {
+        display: grid !important;
+        grid-template-columns: 320px 1fr;
+        /* Sidebar | Workspace */
+        grid-template-rows: 1fr auto;
+        /* Allow space for controls at bottom */
+        max-width: var(--app-max-width);
+        height: 700px !important;
+        /* Fixed dashboard height */
+        max-height: 90vh;
+        background: var(--surface);
+        border-radius: 20px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+    }
+
+    /* Move Info to Left Sidebar */
+    .panel-info {
+        grid-column: 1;
+        background: #FAFAFA;
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 40px;
+        gap: 40px;
+    }
+
+    .targets-container {
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    .target-item {
+        gap: 10px;
+    }
+
+    /* Workspace in Center */
+    .panel-workspace {
+        grid-column: 2;
+        padding: 40px;
+    }
+
+    .mix-container {
+        max-width: 400px;
+    }
+
+    /* Controls floating at bottom of workspace? Or separate panel? */
+    /* Let's put controls at bottom of workspace, cleanly integrated */
+    .panel-controls {
+        grid-column: 1 / -1;
+        /* Bottom bar spanning full width? Or just right side? */
+        /* Design Decision: Keep controls on right side under workspace */
+        grid-column: 2;
+        background: transparent;
+        border-top: none;
+        max-width: 500px;
+        margin: 0 auto;
+        padding-top: 0;
+        width: 100%;
+    }
+
+    .panel-workspace {
+        flex-direction: column;
+        justify-content: center;
+        gap: 40px;
+    }
+
+    /* On desktop, panel-workspace contains the mix AND controls logically via grid placement */
+    .game-grid {
+        grid-template-columns: 300px 1fr;
+        grid-template-rows: 1fr auto;
+    }
+
+    .panel-info {
+        grid-row: 1 / -1;
+    }
+
+    /* Full height sidebar */
+    .panel-workspace {
+        grid-column: 2;
+        grid-row: 1;
+        padding-bottom: 0;
+    }
+
+    .panel-controls {
+        grid-column: 2;
+        grid-row: 2;
+        background: white;
+        border-top: 1px solid var(--border);
+    }
+}
+
+/* --- OVERLAY --- */
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99;
+    backdrop-filter: blur(5px);
+}
+
+.modal {
+    background: white;
+    padding: 40px;
+    border-radius: 24px;
+    text-align: center;
+    width: 90%;
+    max-width: 320px;
+}
+
+.modal-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+}
+
+.score-row {
+    display: flex;
+    gap: 16px;
+    margin: 24px 0;
+    justify-content: center;
+}
+
+.score-item {
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    padding: 12px;
+    border-radius: 8px;
+    min-width: 80px;
+    border: 2px solid transparent;
+    transition: all 0.3s;
+}
+
+.score-item .val {
+    font-size: 1.2rem;
+    font-weight: 800;
+}
+
+.score-item .lbl {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-dim);
+}
+
+.score-item.winner {
+    background: #DCFCE7;
+    /* Light Green */
+    border-color: var(--green);
+    color: var(--green);
+    animation: winnerPulse 1.5s infinite;
+}
+
+.score-item.winner .val {
+    color: var(--green);
+}
+
+.score-item.winner .lbl {
+    color: var(--green);
+    opacity: 0.8;
+}
+
+@keyframes winnerPulse {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+    }
+
+    70% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}

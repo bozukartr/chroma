@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Chroma Duel</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <div class="app-root">
+
+        <!-- HEADER (Global) -->
+        <header class="app-header">
+            <div class="logo">CHROMA</div>
+            <div id="statusMessage" class="status-badge">Çevrimdışı</div>
+        </header>
+
+        <!-- LOBBY VIEW -->
+        <main id="lobbyScreen" class="view active">
+            <div class="lobby-content">
+                <h1>Renk Düellosu</h1>
+                <p>Başlamak için bir odaya bağlanın.</p>
+
+                <div class="lobby-actions">
+                    <button id="createBtn" class="btn primary">Oda Kur</button>
+
+                    <div class="divider">veya</div>
+
+                    <div class="join-row">
+                        <input type="text" id="joinInput" placeholder="KOD" maxlength="4">
+                        <button id="joinBtn" class="btn secondary">Katıl</button>
+                    </div>
+                </div>
+
+                <div id="lobbyInfo" class="lobby-info hidden">
+                    <div class="code-box">
+                        <span>ODA KODU</span>
+                        <h2 id="gameCodeDisplay">...</h2>
+                    </div>
+                    <div class="loading-dots">Oyuncu bekleniyor...</div>
+                    <button id="cancelBtn" class="btn ghost">İptal</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- GAME VIEW -->
+        <main id="gameScreen" class="view hidden game-grid">
+
+            <!-- LEFT / TOP PANEL: INFO & TARGETS -->
+            <aside class="panel-info">
+                <div class="timer-area">
+                    <div class="timer-bar">
+                        <div class="timer-fill"></div>
+                    </div>
+                    <span id="timerDisplay">60</span>
+                </div>
+
+                <div class="targets-container">
+                    <div class="target-item">
+                        <div class="color-preview target" id="targetColorBox"></div>
+                        <span class="label">HEDEF</span>
+                    </div>
+                    <div class="target-item">
+                        <div class="color-preview opponent" id="opponentColorBox"></div>
+                        <span class="label">RAKİP</span>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- CENTER: WORKSPACE -->
+            <section class="panel-workspace">
+                <div class="mix-container">
+                    <div class="color-preview main" id="playerColorBox" style="background-color: #000;"></div>
+                    <button id="resetMixBtn" class="reset-icon" title="Sıfırla">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M23 4v6h-6" />
+                            <path d="M1 20v-6h6" />
+                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                        </svg>
+                    </button>
+                </div>
+            </section>
+
+            <!-- BOTTOM / RIGHT: CONTROLS -->
+            <section class="panel-controls">
+                <div class="ink-row">
+                    <button class="ink-btn red" id="btnRed"><span>K</span></button>
+                    <button class="ink-btn green" id="btnGreen"><span>Y</span></button>
+                    <button class="ink-btn blue" id="btnBlue"><span>M</span></button>
+                </div>
+                <button id="submitBtn" class="btn primary lock-in">RENGİ ONAYLA</button>
+            </section>
+
+            <!-- OVERLAY: RESULT -->
+            <div id="resultOverlay" class="overlay hidden">
+                <div class="modal">
+                    <div class="modal-icon" id="resultEmoji">🏆</div>
+                    <h2 id="resultTitle">Zafer!</h2>
+
+                    <div class="score-row">
+                        <div class="score-item">
+                            <span class="val" id="resultScore">0%</span>
+                            <span class="lbl">SEN</span>
+                        </div>
+                        <div class="score-item opp">
+                            <span class="val" id="opponentScore">0%</span>
+                            <span class="lbl">RAKİP</span>
+                        </div>
+                    </div>
+
+                    <button id="rematchBtn" class="btn primary">Tekrar Oyna</button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    <script src="game.js"></script>
+
+    <!-- Timer Glue -->
+    <script>
+        const tFill = document.querySelector('.timer-fill');
+        const tText = document.getElementById('timerDisplay');
+        setInterval(() => {
+            const v = parseInt(tText.innerText);
+            if (!isNaN(v)) {
+                tFill.style.width = (v / 60) * 100 + "%";
+                tFill.style.background = v < 10 ? "#EF4444" : "#111827";
+            }
+        }, 100);
+    </script>
+</body>
+
+</html>
