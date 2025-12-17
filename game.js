@@ -14,7 +14,9 @@ let state = {
         channel: null
     },
     timer: null,
-    endTime: 0
+    timer: null,
+    endTime: 0,
+    user: null // { uid, displayName, photoURL, gold }
 };
 
 // --- DOM ELEMENTS ---
@@ -53,6 +55,28 @@ const ui = {
     resultEmoji: document.getElementById('resultEmoji'),
     rematchBtn: document.getElementById('rematchBtn'),
 
+    // Auth & Profile
+    loginBtn: document.getElementById('loginBtn'),
+    lobbyButtons: document.getElementById('lobbyButtons'),
+    userProfile: document.getElementById('userProfile'),
+    userGold: document.getElementById('userGold'),
+    userAvatar: document.getElementById('userAvatar'),
+
+    // Auth & Profile
+    loginBtn: document.getElementById('loginBtn'),
+    guestBtn: document.getElementById('guestBtn'), // NEW
+    logoutBtn: document.getElementById('logoutBtn'),
+    lobbyButtons: document.getElementById('lobbyButtons'),
+    userProfile: document.getElementById('userProfile'),
+    userGold: document.getElementById('userGold'),
+    userAvatar: document.getElementById('userAvatar'),
+
+    // Navigation
+    quitGameBtn: document.getElementById('quitGameBtn'), // NEW
+    leaveGameBtn: document.getElementById('leaveGameBtn'), // NEW
+
+    // Powerups
+    btnPowerReveal: document.getElementById('btnPowerReveal'),
     // Timer
     timerDisplay: document.getElementById('timerDisplay'),
     timerBar: document.querySelector('.timer-bar-fill')
@@ -61,6 +85,7 @@ const ui = {
 // --- INITIALIZATION ---
 function init() {
     setupEventListeners();
+    initAuth();
     requestAnimationFrame(gameLoop);
 }
 
@@ -79,6 +104,18 @@ function setupEventListeners() {
 
     ui.submitBtn.addEventListener('click', () => submitScore(false));
     ui.rematchBtn.addEventListener('click', requestRematch);
+
+    // Auth
+    ui.loginBtn.addEventListener('click', loginWithGoogle);
+    ui.guestBtn.addEventListener('click', loginAnonymously); // NEW
+    ui.logoutBtn.addEventListener('click', () => auth.signOut());
+
+    // Navigation
+    ui.quitGameBtn.addEventListener('click', confirmExit); // NEW
+    ui.leaveGameBtn.addEventListener('click', fullQuitGame); // NEW
+
+    // Powerup
+    ui.btnPowerReveal.addEventListener('click', activatePowerReveal);
 }
 
 function setupPourButton(btn, channel) {
@@ -165,7 +202,8 @@ function joinGame() {
             const now = Date.now();
             gameRef.update({
                 status: 'ready',
-                startTime: now + 1000 // Start in 1s
+                startTime: now + 1000, // Start in 1s
+                endTime: now + 1000 + 60000 // Initialize 60s end time
             });
         } else {
             alert("Oda bulunamadı!");
@@ -184,6 +222,41 @@ function cancelGame() {
     ui.lobbyActions.classList.remove('hidden'); // Show the start/join buttons
     ui.lobbyInfo.classList.add('hidden');
     ui.statusMessage.innerText = "Bağlı Değil";
+}
+
+function confirmExit() {
+    if (confirm("Oyundan çıkmak istediğine emin misin?")) {
+        fullQuitGame();
+    }
+}
+
+function fullQuitGame() {
+    state.gameActive = false;
+
+    // Remove listeners
+    if (gameRef) gameRef.off();
+    if (playerRef) playerRef.remove(); // Optional: remove self from room
+
+    // Reset State
+    state.roomId = null;
+    state.playerId = null;
+    gameRef = null;
+    playerRef = null;
+
+    // UI Reset to Lobby
+    screens.game.classList.remove('active');
+    setTimeout(() => screens.game.classList.add('hidden'), 300);
+    screens.lobby.classList.remove('hidden');
+
+    ui.resultOverlay.classList.add('hidden');
+    ui.lobbyInfo.classList.add('hidden');
+
+    // Restore Lobby
+    if (state.user) {
+        ui.lobbyButtons.classList.remove('hidden');
+    } else {
+        ui.loginBtn.classList.remove('hidden');
+    }
 }
 
 function generateRoomId() {
@@ -222,10 +295,13 @@ function listenToRoom() {
         if (data.status === 'ready') {
             if (!state.gameActive && !ui.resultOverlay.classList.contains('hidden')) {
                 // Restart scenario
-                restartLocalGame(data.targetColor, data.startTime);
+                restartLocalGame(data.targetColor, data.startTime, data.endTime);
             } else if (!state.gameActive) {
                 // First start
-                restartLocalGame(data.targetColor, data.startTime);
+                restartLocalGame(data.targetColor, data.startTime, data.endTime);
+            } else if (state.gameActive && data.endTime && state.endTime !== data.endTime) {
+                // SUDDEN DEATH SYNC: Update local timer if server time changes
+                state.endTime = data.endTime;
             }
         }
 
@@ -235,9 +311,21 @@ function listenToRoom() {
             ui.opponentBox.style.backgroundColor = `rgb(${data[opponentId].r}, ${data[opponentId].g}, ${data[opponentId].b})`;
         }
 
-        // 3. Game Over Check
-        if (data.p1 && data.p2 && data.p1.score >= 0 && data.p2.score >= 0 && state.gameActive) {
+        // 3. Game Over & Sudden Death Check
+        const p1Done = data.p1 && data.p1.score >= 0;
+        const p2Done = data.p2 && data.p2.score >= 0;
+
+        if (p1Done && p2Done && state.gameActive) {
             handleGameOver(data.p1.score, data.p2.score);
+        } else if ((p1Done || p2Done) && state.gameActive && data.endTime) {
+            // SUDDEN DEATH: One submitted, drop time to 5s if more remains
+            const now = Date.now();
+            if (data.endTime - now > 5000) {
+                // Only Host (p1) updates to avoid race conditions
+                if (state.playerId === 'p1') {
+                    gameRef.update({ endTime: now + 5000 });
+                }
+            }
         }
 
         // 4. Rematch Check
@@ -251,13 +339,15 @@ function listenToRoom() {
 let highlightTimeout = null; // Track timeout to clear it on restart
 let targetTimeout = null; // Track memory mode timeout
 
-function restartLocalGame(target, startTime) {
+function restartLocalGame(target, startTime, endTime) {
     state.gameActive = true;
     state.myColor = { r: 0, g: 0, b: 0 };
     state.targetColor = target;
 
-    // Timer Setup
-    state.endTime = startTime + 60000; // 60s
+    // Timer Setup: Use provided end time or default to 60s
+    state.endTime = endTime || (startTime + 60000);
+
+    // UI Reset
 
     // UI Reset
     screens.lobby.classList.add('hidden');
@@ -288,6 +378,8 @@ function restartLocalGame(target, startTime) {
     targetTimeout = setTimeout(() => {
         if (state.gameActive) {
             ui.targetBox.classList.add('hidden-mode');
+            // Enable Powerup only when hidden
+            updatePowerUpState();
         }
     }, 5000);
 
@@ -369,6 +461,14 @@ function handleGameOver(p1Score, p2Score) {
         if (myScore > oppScore) {
             ui.resultScore.parentElement.classList.add('winner');
             triggerConfetti();
+
+            // Economy: +50 Gold for Win
+            if (state.user) {
+                const newGold = state.user.gold + 50;
+                database.ref('users/' + state.user.uid).update({ gold: newGold });
+                // Visual feedback could be added here
+            }
+
         } else if (oppScore > myScore) {
             ui.opponentScore.parentElement.classList.add('winner');
         }
@@ -441,6 +541,7 @@ function triggerSystemRestart() {
         targetColor: newTarget,
         status: 'ready',
         startTime: now + 1000,
+        endTime: now + 1000 + 60000, // Initialize explicitly for Sudden Death
         rematch: { p1: false, p2: false },
         p1: { r: 0, g: 0, b: 0, score: -1 },
         p2: { r: 0, g: 0, b: 0, score: -1 }
@@ -448,6 +549,103 @@ function triggerSystemRestart() {
 }
 
 init();
+
+// --- AUTH & ECONOMY ---
+function initAuth() {
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            // Logged In
+            state.user = {
+                uid: user.uid,
+                displayName: user.displayName || "Misafir",
+                // Use custom geometric avatar based on UID
+                photoURL: `https://api.dicebear.com/9.x/shapes/svg?seed=${user.uid}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf`,
+                gold: 0 // Default, will sync from DB
+            };
+
+            // UI Updates
+            ui.loginBtn.classList.add('hidden');
+            ui.guestBtn.classList.add('hidden'); // Hide guest button too
+            ui.lobbyButtons.classList.remove('hidden');
+            ui.userProfile.classList.remove('hidden');
+            ui.userAvatar.src = state.user.photoURL; // Use the generated avatar
+            ui.statusMessage.innerText = "Çevrimiçi";
+
+            loadUserData();
+
+        } else {
+            // Logged Out
+            state.user = null;
+            ui.loginBtn.classList.remove('hidden');
+            ui.guestBtn.classList.remove('hidden'); // Show guest button
+            ui.lobbyButtons.classList.add('hidden');
+            ui.userProfile.classList.add('hidden');
+            ui.statusMessage.innerText = "Giriş Yapılmadı";
+        }
+    });
+}
+
+function loginWithGoogle() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider).catch(err => alert("Giriş hatası: " + err.message));
+}
+
+function loginAnonymously() {
+    auth.signInAnonymously().catch(err => alert("Giriş hatası: " + err.message));
+}
+
+function loadUserData() {
+    const userRef = database.ref('users/' + state.user.uid);
+    userRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            state.user.gold = data.gold || 0;
+            ui.userGold.innerText = `🪙 ${state.user.gold}`;
+
+            // Re-evaluate button state
+            updatePowerUpState();
+        } else {
+            // First time user logic
+            userRef.set({
+                gold: 0,
+                displayName: state.user.displayName,
+                photoURL: state.user.photoURL
+            });
+        }
+    });
+}
+
+function activatePowerReveal() {
+    if (!state.user || state.user.gold < 20) return;
+
+    // 1. Deduct Gold
+    const newGold = state.user.gold - 20;
+    database.ref('users/' + state.user.uid).update({ gold: newGold });
+
+    // 2. Apply Effect (Reveal Target)
+    ui.targetBox.classList.remove('hidden-mode');
+    updatePowerUpState(); // Update visual state immediately
+
+    // 3. Re-hide after 5s
+    // Clear any existing hidden-mode timeout to prevent early hiding
+    if (targetTimeout) clearTimeout(targetTimeout);
+    targetTimeout = setTimeout(() => {
+        if (state.gameActive) {
+            ui.targetBox.classList.add('hidden-mode');
+            updatePowerUpState(); // Re-enable if conditions met
+        }
+    }, 5000); // 5 seconds of visibility
+}
+
+function updatePowerUpState() {
+    if (!ui.btnPowerReveal) return;
+
+    const isHidden = ui.targetBox.classList.contains('hidden-mode');
+    const hasGold = state.user && state.user.gold >= 20;
+
+    // Enable only if: Mode is Hidden AND User has Gold
+    ui.btnPowerReveal.disabled = !(isHidden && hasGold);
+}
 
 // --- CONFETTI SYSTEM ---
 function triggerConfetti() {

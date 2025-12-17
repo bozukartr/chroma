@@ -37,6 +37,13 @@
         <!-- HEADER (Global) -->
         <header class="app-header">
             <div class="logo">CHROMA</div>
+
+            <div id="userProfile" class="user-profile hidden">
+                <span id="userGold" class="gold-badge">🪙 0</span>
+                <img id="userAvatar" src="" alt="User" class="avatar">
+                <button id="logoutBtn" class="btn-icon-small" title="Çıkış Yap">🚪</button>
+            </div>
+
             <div id="statusMessage" class="status-badge">Çevrimdışı</div>
         </header>
 
@@ -47,13 +54,20 @@
                 <p>Başlamak için bir odaya bağlanın.</p>
 
                 <div class="lobby-actions">
-                    <button id="createBtn" class="btn primary">Oda Kur</button>
+                    <button id="loginBtn" class="btn google-btn">
+                        <span>G</span> Google ile Giriş Yap
+                    </button>
+                    <button id="guestBtn" class="btn ghost-small">Misafir Olarak Oyna</button>
 
-                    <div class="divider">veya</div>
+                    <div id="lobbyButtons" class="hidden">
+                        <button id="createBtn" class="btn primary">Oda Kur</button>
 
-                    <div class="join-row">
-                        <input type="text" id="joinInput" placeholder="KOD" maxlength="4">
-                        <button id="joinBtn" class="btn secondary">Katıl</button>
+                        <div class="divider">veya</div>
+
+                        <div class="join-row">
+                            <input type="text" id="joinInput" placeholder="KOD" maxlength="4">
+                            <button id="joinBtn" class="btn secondary">Katıl</button>
+                        </div>
                     </div>
                 </div>
 
@@ -69,7 +83,9 @@
         </main>
 
         <!-- GAME VIEW -->
-        <main id="gameScreen" class="view hidden game-grid">
+        <main id="gameScreen" class="game-grid view hidden">
+
+            <button id="quitGameBtn" class="btn-icon-floating" title="Oyundan Çık">✕</button>
 
             <!-- LEFT / TOP PANEL: INFO & TARGETS -->
             <aside class="panel-info">
@@ -89,6 +105,13 @@
                         <div class="color-preview opponent" id="opponentColorBox"></div>
                         <span class="label">RAKİP</span>
                     </div>
+                </div>
+
+                <div class="powerups-area">
+                    <button id="btnPowerReveal" class="btn-power" title="5 saniye göster (20 Altın)">
+                        <span class="icon">👁️</span>
+                        <span class="cost">20</span>
+                    </button>
                 </div>
             </aside>
 
@@ -133,7 +156,10 @@
                         </div>
                     </div>
 
-                    <button id="rematchBtn" class="btn primary">Tekrar Oyna</button>
+                    <div class="modal-actions">
+                        <button id="leaveGameBtn" class="btn ghost">Çıkış</button>
+                        <button id="rematchBtn" class="btn primary">Tekrar Oyna</button>
+                    </div>
                 </div>
             </div>
 
@@ -142,6 +168,7 @@
 
     <!-- Scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="firebase-config.js"></script>
     <script src="game.js"></script>
