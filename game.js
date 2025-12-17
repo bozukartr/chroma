@@ -112,7 +112,7 @@ function setupEventListeners() {
 
     // Navigation
     ui.quitGameBtn.addEventListener('click', confirmExit); // NEW
-    ui.leaveGameBtn.addEventListener('click', fullQuitGame); // NEW
+    ui.leaveGameBtn.addEventListener('click', () => window.location.reload()); // Exit -> Reload (F5)
 
     // Powerup
     ui.btnPowerReveal.addEventListener('click', activatePowerReveal);
@@ -226,7 +226,7 @@ function cancelGame() {
 
 function confirmExit() {
     if (confirm("Oyundan çıkmak istediğine emin misin?")) {
-        fullQuitGame();
+        window.location.reload(); // F5 Logic
     }
 }
 

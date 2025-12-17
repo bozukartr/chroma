@@ -23,6 +23,20 @@
     margin: 0;
     padding: 0;
     -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    /* Safari */
+    user-select: none;
+    /* Standard */
+    -webkit-touch-callout: none;
+    /* iOS Long press menu */
+}
+
+/* Allow selection in inputs */
+input,
+textarea {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
 }
 
 html,
@@ -149,8 +163,11 @@ body {
 
 /* --- GAME GRID LAYOUT --- */
 /* MOBILE: ROBUST GRID LAYOUT (Prevents Overlap) */
-.game-grid {
-    display: grid;
+/* --- GAME GRID LAYOUT --- */
+/* MOBILE: ROBUST GRID LAYOUT (Prevents Overlap) */
+/* Specificity Fix: Must override .view.active display:flex BUT respect .hidden */
+.game-grid.view:not(.hidden) {
+    display: grid !important;
     /* 3 Rows: Info Panel (Auto), Workspace (Remaining Space), Controls (Auto) */
     grid-template-rows: auto minmax(0, 1fr) auto;
     height: 100%;
@@ -230,40 +247,48 @@ body {
     letter-spacing: 0.05em;
 }
 
-/* 2. WORKSPACE (Main Mix) - Flexible */
+/* 2. WORKSPACE (Middle - Flexible) */
 .panel-workspace {
-    flex: 1;
-    /* Take all available space */
+    grid-row: 2;
+    position: relative;
+    width: 100%;
+    height: 100%;
     display: flex;
+    flex-direction: column;
+    /* Stack targets/powerups vertically */
     align-items: center;
     justify-content: center;
-    padding: 10px 20px;
-    /* Reduced padding for mobile */
-    min-height: 0;
-    /* Crucial: allows container to shrink below content size */
+    padding: 10px;
+    gap: 10px;
+    /* Space between PowerUp and Circle */
     overflow: hidden;
 }
 
 .mix-container {
     width: 100%;
-    height: 100%;
-    position: relative;
+    /* Critical: must have width to support child percentage */
+    flex: 1;
+    /* Take remaining vertical space */
     display: flex;
     justify-content: center;
     align-items: center;
+    position: relative;
+    min-height: 0;
+    padding: 10px;
+    /* Internal padding */
 }
 
 .color-preview.main {
-    /* Smart Sizing: Use the smaller dimension (width or height) minus margins */
-    width: min(75vw, 45vh);
-    height: min(75vw, 45vh);
-    max-width: 300px;
-    max-height: 300px;
-    border-radius: 50%;
+    /* Auto size to fit container: Try to fill width, but cap at height */
+    width: 100%;
+    height: auto;
+    max-height: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: var(--radius);
     box-shadow: 0 5px 25px rgba(0, 0, 0, 0.1);
     transition: background-color 0.1s;
-    flex-shrink: 1;
-    /* Allow shrinking */
+    /* Center in container */
+    margin: auto;
 }
 
 .reset-icon {
