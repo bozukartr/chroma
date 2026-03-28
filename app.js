@@ -36,7 +36,7 @@ const auth = getAuth(firebase);
 const TOTAL_ROUNDS = 3;
 const REVEAL_SECS = 10;
 const GUESS_SECS = 10;
-const RESULT_SECS = 5;
+const RESULT_SECS = 8;
 const MAX_SCORE = 100;
 const MAX_DIST = Math.sqrt(255 ** 2 * 3); // ~441.67
 
@@ -309,12 +309,55 @@ window.App = {
     showToast("✅ Rakip bulundu! Oyun başlıyor…");
     vibrate([30, 30, 80]);
 
-    // Only host writes game state
     if (myRole === "host") {
-      // Mark status as playing to avoid re-triggering
       await update(ref(db, `rooms/${roomId}/meta`), { status: "playing" });
-      setTimeout(() => this._hostStartRound(1), 2000);
+      // Give both clients time to see "match found" toast, then start round
+      setTimeout(() => this._hostStartRound(1), 3000);
     }
+  },
+
+
+  // ─── Get Ready Overlay ────────────────────────────────────────
+  _showGetReady(round, cb) {
+    const overlay  = $("get-ready-overlay");
+    const countEl  = $("gr-count");
+    const labelEl  = $("gr-label");
+    const roundEl  = $("gr-round-label");
+
+    roundEl.textContent = `Tur ${round} / ${TOTAL_ROUNDS}`;
+    labelEl.textContent = "Hazır Ol!";
+    countEl.textContent = "3";
+    countEl.classList.remove("go-flash");
+
+    overlay.classList.add("active");
+    vibrate(60);
+
+    const steps = [
+      { n: "3", delay: 0 },
+      { n: "2", delay: 1000 },
+      { n: "1", delay: 2000 },
+      { n: "BAŞLA!", delay: 3000, go: true }
+    ];
+
+    steps.forEach(({ n, delay, go }) => {
+      setTimeout(() => {
+        countEl.textContent = n;
+        if (go) {
+          countEl.classList.add("go-flash");
+          labelEl.textContent = "Rengi Ezberle!";
+          vibrate([40, 20, 80]);
+        } else {
+          vibrate(25);
+        }
+      }, delay);
+    });
+
+    // Hide overlay and start reveal after 4s
+    setTimeout(() => {
+      overlay.classList.remove("active");
+      // Small gap after overlay fades before reveal screen
+      setTimeout(() => cb(), 350);
+    }, 4000);
   },
 
 
@@ -331,6 +374,11 @@ window.App = {
 
   // ─── Reveal Phase ────────────────────────────────────────────
   _startReveal() {
+    // Show "Get Ready" overlay first, then reveal
+    this._showGetReady(currentRound, () => this._doReveal());
+  },
+
+  _doReveal() {
     guessSubmitted = false;
     showScreen("reveal");
 
@@ -502,13 +550,15 @@ window.App = {
       showToast("🤝 Bu tur berabere!");
     }
 
-    // Next round timer (host advances)
+    // Next round countdown + host advances
     let nextRound = round + 1;
     let countdown = RESULT_SECS;
     const hint = $("next-round-hint");
+
     const tick = setInterval(() => {
-      hint.textContent = `Sonraki tur ${countdown} saniye sonra`;
-      if (countdown <= 0) {
+      if (countdown > 0) {
+        hint.textContent = `▶ Sonraki tur ${countdown} saniye sonra başlıyor`;
+      } else {
         clearInterval(tick);
         hint.textContent = "";
         if (myRole === "host") this._hostStartRound(nextRound);
