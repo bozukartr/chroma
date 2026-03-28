@@ -1,327 +1,141 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <title>Chroma Duel — RGB Renk Tahmin Oyunu</title>
-  <meta name="description" content="Rakibinle yarış! 3 saniyede rengi ezberle, 10 saniyede RGB ile en yakın rengi bul. Firebase tabanlı multiplayer oyun." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Chroma Duel | Premium Match</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- ═══════════ GET READY OVERLAY (above all screens) ═══════════ -->
-  <div id="get-ready-overlay" class="get-ready-overlay" aria-live="assertive">
-    <div class="get-ready-box">
-      <p class="get-ready-round" id="gr-round-label">Tur 1 / 3</p>
-      <div class="get-ready-count" id="gr-count">3</div>
-      <p class="get-ready-label" id="gr-label">Hazır Ol!</p>
+    <div id="app" class="app-container">
+        <!-- Minimal HUD -->
+        <nav id="hud" class="hud-nav hidden">
+            <div class="round-info">ROUND <span id="round-num">1</span></div>
+            <div class="session-stats">
+                <div class="p-score"><span id="hud-p1-name">P1</span> <b id="hud-p1-score">0</b></div>
+                <div class="p-score"><span id="hud-p2-name">P2</span> <b id="hud-p2-score">0</b></div>
+            </div>
+        </nav>
+
+        <!-- Entry Screen -->
+        <section id="join-screen" class="screen active">
+            <div class="header-unit">
+                <h1>Chroma<br>Duel</h1>
+                <p>ULTRA-MINIMAL COLOR MEMORY</p>
+            </div>
+            <div class="input-stack">
+                <input type="text" id="player-name" placeholder="Fighter Name" class="field-input" maxlength="12">
+                <input type="text" id="room-id" placeholder="Room Signal" class="field-input" maxlength="6">
+                <button id="join-btn" class="action-btn">ESTABLISH LINK</button>
+            </div>
+        </section>
+
+        <!-- Waiting Lobby -->
+        <section id="lobby-screen" class="screen">
+            <div class="header-unit">
+                <h1>Awaiting<br>Match.</h1>
+                <p>ROOM SIGNAL IDENTIFIED: <b>#<span id="display-room-id"></span></b></p>
+            </div>
+            <div class="lobby-status">
+                <div id="p1-slot" class="lobby-node active">
+                    <div class="node-circle">1</div>
+                    <div class="node-label" id="lobby-p1-name">P1</div>
+                </div>
+                <div id="p2-slot" class="lobby-node">
+                    <div class="node-circle">2</div>
+                    <div class="node-label" id="lobby-p2-name">P2</div>
+                </div>
+            </div>
+            <div class="loader-pro"></div>
+        </section>
+
+        <!-- Memorize Phase -->
+        <section id="target-phase" class="screen">
+            <div class="header-unit">
+                <h1>Memorize.</h1>
+                <p>ANALYZE THE SPECTRAL DATA BELOW.</p>
+            </div>
+            <div class="visual-anchor">
+                <div class="timer-orb"><span id="target-timer">10</span>s</div>
+                <div id="target-color-box" class="color-stage"></div>
+            </div>
+        </section>
+
+        <!-- Match Phase -->
+        <section id="guess-phase" class="screen">
+            <div class="header-unit">
+                <h1>Match.</h1>
+                <p>REPLICATE THE COLOR FROM MEMORY.</p>
+            </div>
+            
+            <div class="visual-anchor">
+                <div class="timer-orb danger"><span id="guess-timer">20</span>s</div>
+                <div id="guess-color-box" class="color-field color-stage"></div>
+            </div>
+
+            <div class="slider-stack">
+                <div class="slider-row r-ch">
+                    <div class="row-header"><span>CHANNEL R</span> <b id="r-val">128</b></div>
+                    <input type="range" id="r-slider" min="0" max="255" value="128" class="pro-slider">
+                </div>
+                <div class="slider-row g-ch">
+                    <div class="row-header"><span>CHANNEL G</span> <b id="g-val">128</b></div>
+                    <input type="range" id="g-slider" min="0" max="255" value="128" class="pro-slider">
+                </div>
+                <div class="slider-row b-ch">
+                    <div class="row-header"><span>CHANNEL B</span> <b id="b-val">128</b></div>
+                    <input type="range" id="b-slider" min="0" max="255" value="128" class="pro-slider">
+                </div>
+            </div>
+
+            <button id="submit-guess" class="action-btn">LOCK SIGNAL</button>
+        </section>
+
+        <!-- Results Screen -->
+        <section id="result-screen" class="screen">
+            <div class="header-unit">
+                <h1 id="winner-text">Match Ended.</h1>
+                <p>SIGNAL ALIGNMENT DATA REPORTED.</p>
+            </div>
+
+            <div class="result-timeline">
+                <!-- Target Source -->
+                <div class="res-node">
+                    <div id="res-target" class="res-swatch"></div>
+                    <div class="res-info">
+                        <div class="res-title">Target Signal</div>
+                        <div class="res-val">100% Core</div>
+                    </div>
+                </div>
+                <!-- Player 1 Data -->
+                <div class="res-node">
+                    <div id="res-p1" class="res-swatch"></div>
+                    <div class="res-info">
+                        <div class="res-title" id="res-p1-name">P1 Prediction</div>
+                        <div class="res-val" id="res-p1-dist">0% MATCH</div>
+                    </div>
+                </div>
+                <!-- Player 2 Data -->
+                <div class="res-node">
+                    <div id="res-p2" class="res-swatch"></div>
+                    <div class="res-info">
+                        <div class="res-title" id="res-p2-name">P2 Prediction</div>
+                        <div class="res-val" id="res-p2-dist">0% MATCH</div>
+                    </div>
+                </div>
+            </div>
+
+            <button id="restart-btn" class="action-btn">CONTINUE SESSION</button>
+            <p style="text-align:center; margin-top:30px; font-size:10px; opacity:0.3; letter-spacing:1px; font-weight:800; text-transform:uppercase;">Next round updates core signals.</p>
+        </section>
+
+        <!-- Toasts -->
+        <div id="toast" class="toast"></div>
     </div>
-  </div>
 
-
-  <!-- ═══════════════════════════════ SCREEN: LOGIN ═══════════════════════════════ -->
-  <div id="screen-login" class="screen active">
-    <div class="screen-content">
-      <div class="logo-wrap">
-        <div class="logo-icon">
-          <div class="logo-dot" style="background:#f87171"></div>
-          <div class="logo-dot" style="background:#4ade80"></div>
-          <div class="logo-dot" style="background:#60a5fa"></div>
-        </div>
-        <h1 class="logo-title">Chroma<span>Duel</span></h1>
-        <p class="logo-sub">RGB Renk Tahmin Oyunu</p>
-      </div>
-
-      <div class="card login-card">
-        <label class="input-label" for="nickname-input">Kullanıcı Adın</label>
-        <input
-          type="text"
-          id="nickname-input"
-          class="text-input"
-          placeholder="ör. ColorMaster99"
-          maxlength="20"
-          autocomplete="off"
-          autocorrect="off"
-          spellcheck="false"
-        />
-
-        <div class="login-actions">
-          <button id="btn-create" class="btn btn-primary" onclick="App.createRoom()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-            <span class="btn-text">Oda Oluştur</span>
-          </button>
-          <button id="btn-join-toggle" class="btn btn-secondary" onclick="App.toggleJoin()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-            <span class="btn-text">Odaya Katıl</span>
-          </button>
-        </div>
-
-        <!-- Join panel (hidden by default) -->
-        <div id="join-panel" class="join-panel" style="display:none">
-          <label class="input-label" for="room-code-input">5 Haneli Oda Kodu</label>
-          <div class="join-row">
-            <input
-              type="tel"
-              id="room-code-input"
-              class="text-input code-input"
-              placeholder="12345"
-              maxlength="5"
-              inputmode="numeric"
-              pattern="[0-9]*"
-              autocomplete="off"
-            />
-            <button class="btn btn-primary btn-join-go" id="btn-join-go" onclick="App.joinRoom()">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <p class="hint-text">Oda kodu paylaş, arkadaşınla yarış!</p>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════ SCREEN: LOBBY ═══════════════════════════════ -->
-  <div id="screen-lobby" class="screen">
-    <div class="screen-content">
-      <div class="lobby-header">
-        <button class="btn-icon-only" onclick="App.goBack()" aria-label="Geri">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        </button>
-        <h2 class="screen-title">Lobi</h2>
-        <div style="width:36px"></div>
-      </div>
-
-      <div class="card player-card">
-        <div class="avatar-ring" id="lobby-avatar">
-          <span id="lobby-avatar-letter">?</span>
-        </div>
-        <p class="player-name" id="lobby-player-name">—</p>
-        <span class="badge badge-green" id="lobby-status-badge">Hazır</span>
-      </div>
-
-      <div class="vs-divider">
-        <div class="vs-line"></div>
-        <span class="vs-text">VS</span>
-        <div class="vs-line"></div>
-      </div>
-
-      <div class="card player-card opponent-card">
-        <div class="avatar-ring avatar-ring--muted" id="opponent-avatar">
-          <span id="opponent-avatar-letter">?</span>
-        </div>
-        <p class="player-name" id="opponent-player-name">Rakip aranıyor…</p>
-        <div class="searching-dots" id="searching-indicator">
-          <span></span><span></span><span></span>
-        </div>
-      </div>
-
-      <div class="card room-info">
-        <div class="room-row">
-          <span class="room-label">Oda Kodu</span>
-          <div class="room-code-pill" id="room-code-pill" onclick="App.copyCode()" title="Kopyalamak için tıkla">
-            <span class="room-code-big" id="room-code-display">—</span>
-            <svg class="copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          </div>
-        </div>
-        <div class="room-row">
-          <span class="room-label">Tur Sayısı</span>
-          <span class="room-value">3 Tur</span>
-        </div>
-        <div class="room-row">
-          <span class="room-label">Tahmin Süresi</span>
-          <span class="room-value">10 sn / tur</span>
-        </div>
-      </div>
-
-      <div id="lobby-waiting-msg" class="hint-text">Rakip bekleniyor, kodu paylaş…</div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════ SCREEN: REVEAL (Color Show) ═══════════════════════════════ -->
-  <div id="screen-reveal" class="screen">
-    <div class="screen-content screen-content--centered">
-      <p class="round-label" id="reveal-round-label">Tur 1 / 3</p>
-      <h2 class="phase-title">Rengi Ezberle!</h2>
-
-      <div class="target-color-ring" id="target-color-display">
-        <div class="target-color-inner" id="target-color-inner"></div>
-      </div>
-
-      <div class="countdown-wrap">
-        <div class="countdown-ring">
-          <svg class="countdown-svg" viewBox="0 0 64 64">
-            <circle class="countdown-track" cx="32" cy="32" r="28"/>
-            <circle class="countdown-progress" id="reveal-progress-circle" cx="32" cy="32" r="28"/>
-          </svg>
-          <span class="countdown-number" id="reveal-countdown">3</span>
-        </div>
-      </div>
-
-      <p class="hint-text">Süre dolunca tahmin ekranı açılır</p>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════ SCREEN: GUESS (RGB Sliders) ═══════════════════════════════ -->
-  <div id="screen-guess" class="screen">
-    <div class="guess-layout">
-
-      <!-- Top: Round info + timer -->
-      <div class="guess-header">
-        <div class="guess-round" id="guess-round-label">Tur 1 / 3</div>
-        <div class="guess-timer-wrap">
-          <div class="guess-timer-ring">
-            <svg class="guess-timer-svg" viewBox="0 0 48 48">
-              <circle class="countdown-track" cx="24" cy="24" r="20"/>
-              <circle class="countdown-progress" id="guess-progress-circle" cx="24" cy="24" r="20"/>
-            </svg>
-            <span class="guess-timer-number" id="guess-countdown">10</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Player color preview only — target is hidden during guess -->
-      <div class="player-preview-wrap">
-        <div class="player-preview-block" id="player-color-preview"></div>
-        <span class="color-block-label">Oluşturduğun Renk</span>
-      </div>
-
-      <!-- Sliders -->
-      <div class="sliders-card card">
-        <!-- R -->
-        <div class="slider-group">
-          <div class="slider-header">
-            <div class="slider-dot" style="background:#f87171"></div>
-            <span class="slider-label">Kırmızı (R)</span>
-            <span class="slider-value" id="r-value">128</span>
-          </div>
-          <div class="slider-track-wrap">
-            <input type="range" id="slider-r" class="slider slider-r" min="0" max="255" value="128"
-              oninput="App.onSliderChange()" />
-          </div>
-        </div>
-        <!-- G -->
-        <div class="slider-group">
-          <div class="slider-header">
-            <div class="slider-dot" style="background:#4ade80"></div>
-            <span class="slider-label">Yeşil (G)</span>
-            <span class="slider-value" id="g-value">128</span>
-          </div>
-          <div class="slider-track-wrap">
-            <input type="range" id="slider-g" class="slider slider-g" min="0" max="255" value="128"
-              oninput="App.onSliderChange()" />
-          </div>
-        </div>
-        <!-- B -->
-        <div class="slider-group">
-          <div class="slider-header">
-            <div class="slider-dot" style="background:#60a5fa"></div>
-            <span class="slider-label">Mavi (B)</span>
-            <span class="slider-value" id="b-value">128</span>
-          </div>
-          <div class="slider-track-wrap">
-            <input type="range" id="slider-b" class="slider slider-b" min="0" max="255" value="128"
-              oninput="App.onSliderChange()" />
-          </div>
-        </div>
-      </div>
-
-      <!-- Submit -->
-      <button id="btn-submit-guess" class="btn btn-primary btn-submit" onclick="App.submitGuess()">
-        <span class="btn-text">Tahmini Gönder</span>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-      </button>
-
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════ SCREEN: ROUND RESULT ═══════════════════════════════ -->
-  <div id="screen-round-result" class="screen">
-    <div class="screen-content">
-      <p class="round-label" id="result-round-label">Tur 1 Sonuçları</p>
-
-      <div class="result-colors-row">
-        <div class="result-color-block" id="result-target-color"></div>
-        <div class="result-color-block" id="result-my-color"></div>
-        <div class="result-color-block" id="result-opp-color"></div>
-      </div>
-      <div class="result-colors-labels">
-        <span>Hedef</span>
-        <span>Sen</span>
-        <span>Rakip</span>
-      </div>
-
-      <div class="result-scores-row">
-        <div class="result-score-card card">
-          <p class="result-score-label">Senin Puanın</p>
-          <p class="result-score-value" id="result-my-score">—</p>
-        </div>
-        <div class="result-score-card card">
-          <p class="result-score-label">Rakip Puanı</p>
-          <p class="result-score-value" id="result-opp-score">—</p>
-        </div>
-      </div>
-
-      <div class="total-scores card">
-        <div class="total-row">
-          <span id="total-my-name">Sen</span>
-          <div class="score-bar-wrap">
-            <div class="score-bar score-bar--me" id="score-bar-me"></div>
-          </div>
-          <span class="total-val" id="total-my-total">0</span>
-        </div>
-        <div class="total-row">
-          <span id="total-opp-name">Rakip</span>
-          <div class="score-bar-wrap">
-            <div class="score-bar score-bar--opp" id="score-bar-opp"></div>
-          </div>
-          <span class="total-val" id="total-opp-total">0</span>
-        </div>
-      </div>
-
-      <p class="hint-text" id="next-round-hint">Sonraki tur 5 saniye sonra başlıyor…</p>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════ SCREEN: FINAL RESULT ═══════════════════════════════ -->
-  <div id="screen-final" class="screen">
-    <div class="screen-content screen-content--centered">
-      <div class="final-trophy" id="final-trophy">🏆</div>
-      <h2 class="final-title" id="final-title">Tebrikler!</h2>
-      <p class="final-subtitle" id="final-subtitle">Sen kazandın!</p>
-
-      <div class="final-scores card">
-        <div class="final-score-row">
-          <div class="final-avatar" id="final-my-avatar"></div>
-          <span class="final-name" id="final-my-name">Sen</span>
-          <span class="final-pts" id="final-my-pts">0 pts</span>
-        </div>
-        <div class="final-divider"></div>
-        <div class="final-score-row">
-          <div class="final-avatar" id="final-opp-avatar"></div>
-          <span class="final-name" id="final-opp-name">Rakip</span>
-          <span class="final-pts" id="final-opp-pts">0 pts</span>
-        </div>
-      </div>
-
-      <button class="btn btn-primary" onclick="App.playAgain()">
-        <span class="btn-text">Tekrar Oyna</span>
-        <span class="btn-icon">↺</span>
-      </button>
-      <button class="btn btn-secondary" onclick="App.goHome()">
-        <span class="btn-text">Ana Menü</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════ TOAST ═══════════════════════════════ -->
-  <div id="toast" class="toast" aria-live="polite"></div>
-
-  <!-- Firebase SDK -->
-  <script type="module" src="app.js"></script>
+    <script type="module" src="app.js"></script>
 </body>
 </html>
